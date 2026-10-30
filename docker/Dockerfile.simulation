@@ -1,0 +1,54 @@
+# FalconEye FPV - Simulation Container
+# Ubuntu 22.04 + ROS 2 Humble + Gazebo + PX4 SITL + Micro-XRCE-DDS
+
+FROM osrf/ros:humble-desktop-full
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV SHELL=/bin/bash
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    git \
+    wget \
+    curl \
+    python3-pip \
+    python3-colcon-common-extensions \
+    python3-rosdep \
+    gstreamer1.0-tools \
+    gstreamer1.0-plugins-base \
+    gstreamer1.0-plugins-good \
+    gstreamer1.0-plugins-bad \
+    gstreamer1.0-plugins-ugly \
+    libgstreamer1.0-dev \
+    libgstreamer-plugins-base1.0-dev \
+    tmux \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Micro-XRCE-DDS Agent for PX4 <-> ROS 2 native DDS bridging
+WORKDIR /root
+RUN git clone https://github.com/eProsima/Micro-XRCE-DDS-Agent.git && \
+    cd Micro-XRCE-DDS-Agent && \
+    mkdir build && cd build && \
+    cmake .. && \
+    make -j$(nproc) && \
+    make install && \
+    ldconfig /usr/local/lib/
+
+# Install Python packages for AI prototyping and MAVLink
+RUN pip3 install --no-cache-dir \
+    ultralytics \
+    opencv-python-headless \
+    pymavlink \
+    mavsdk \
+    numpy \
+    scipy \
+    eclipse-zenoh
+
+# Workspace setup
+WORKDIR /root/falconeye_ws
+RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc
+
+CMD ["/bin/bash"]

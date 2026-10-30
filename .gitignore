@@ -1,0 +1,61 @@
+# FalconEye FPV - Git Ignore Rules
+
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Node & Frontend
+node_modules/
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dist/
+dist-ssr/
+*.local
+
+# C++ & ROS 2 Build Artifacts
+install/
+log/
+build/
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.exe
+
+# AI Weights & Large Datasets (Track recipes and configs, not raw GBs)
+ai_models/weights/*.pt
+ai_models/weights/*.onnx
+ai_models/weights/*.engine
+ai_models/weights/*.hef
+ai_models/datasets/VisDrone/
+ai_models/datasets/DOTA/
+ai_models/datasets/downloads/
+*.zip
+*.tar.gz
+
+# IDE & OS Files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs & Temporary telemetry logs
+*.log
+telemetry_logs/
+runs/

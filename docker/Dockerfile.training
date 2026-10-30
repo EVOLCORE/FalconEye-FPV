@@ -1,0 +1,32 @@
+# FalconEye FPV - AI Model Training & Export Container
+# PyTorch + CUDA + Ultralytics YOLO11 + SAHI + TensorRT Export tools
+
+FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-devel
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    wget \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+
+# Install AI training stack
+RUN pip install --no-cache-dir \
+    ultralytics \
+    albumentations \
+    sahi \
+    opencv-python-headless \
+    pyyaml \
+    timm \
+    onnx \
+    onnxruntime-gpu \
+    tensorrt
+
+CMD ["/bin/bash"]
