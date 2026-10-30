@@ -2,7 +2,7 @@
   "name": "falconeye-fpv-root",
   "private": true,
   "version": "1.0.0",
-  "description": "FalconEye FPV - Autonomous AI FPV Drone System",
+  "description": "Autonomous AI FPV Drone System: Edge AI vision (YOLO11/TensorRT), visual tracking & collision intercept, multi-drone airborne mesh swarms, military thermal night vision, satellite tactical map & killboxes, anti-jamming optical flow, and multi-link bonding.",
   "scripts": {
     "server": "npm --prefix falconeye_esp run server",
     "dev": "npm --prefix falconeye_esp run dev",
