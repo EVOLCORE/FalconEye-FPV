@@ -5,6 +5,9 @@ export interface BoundingBox {
   yMax: number;
 }
 
+export type VisionMode = 'DAYLIGHT' | 'THERMAL_WHITE_HOT' | 'THERMAL_BLACK_HOT' | 'THERMAL_IRONBOW';
+export type NavigationSource = 'GPS_RTK' | 'OPTICAL_FLOW_VISION' | 'ESTIMATED_DEAD_RECKONING';
+
 export interface TargetTrack {
   trackId: number;
   className: string;
@@ -16,11 +19,12 @@ export interface TargetTrack {
   distanceMeters?: number;
   isDesignated?: boolean;
   trackingDroneId?: number;
+  inKillbox?: boolean;
 }
 
 export interface FlightStatus {
   armed: boolean;
-  flightMode: 'MANUAL' | 'ALT_HOLD' | 'POS_HOLD' | 'OFFBOARD' | 'RTL';
+  flightMode: 'MANUAL' | 'ALT_HOLD' | 'POS_HOLD' | 'OFFBOARD' | 'INTERCEPT' | 'RTL';
   batteryPct: number;
   batteryVoltage: number;
   altitudeMeters: number;
@@ -30,6 +34,7 @@ export interface FlightStatus {
   rollDeg: number;
   gpsStatus: 'NO_GPS' | '3D_FIX' | 'RTK_LOCK';
   satellites: number;
+  navigationSource: NavigationSource;
 }
 
 export interface SwarmDroneInfo {
@@ -42,6 +47,13 @@ export interface SwarmDroneInfo {
   relayThroughDroneId: number; // 0 if direct to pilot
   role: 'SCOUT' | 'TRACKING' | 'RELAY' | 'RTH';
   lockedTargetId: number | null;
+}
+
+export interface GeofenceZone {
+  id: string;
+  name: string;
+  type: 'KILLBOX' | 'KEEP_OUT';
+  coords: [number, number][]; // [lat, lon]
 }
 
 export interface NetworkProviderStatus {

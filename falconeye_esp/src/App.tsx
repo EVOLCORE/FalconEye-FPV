@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { TargetTrack, FlightStatus, FalconNetStatus, SwarmDroneInfo } from './types';
+import { TargetTrack, FlightStatus, FalconNetStatus, SwarmDroneInfo, VisionMode, NavigationSource, GeofenceZone } from './types';
 import { HeaderBar } from './components/HeaderBar';
 import { HudOverlay } from './components/HudOverlay';
 import { TacticalMap } from './components/TacticalMap';
 import { NetworkStatusWidget } from './components/NetworkStatusWidget';
 import { TargetListWidget } from './components/TargetListWidget';
-import { ShieldAlert, RotateCcw, Crosshair } from 'lucide-react';
+import { ShieldAlert, RotateCcw, Crosshair, RadioTower, Sparkles } from 'lucide-react';
 
 export const App: React.FC = () => {
   // Airborne Swarm Team
@@ -37,7 +37,10 @@ export const App: React.FC = () => {
   const [selectedDroneId, setSelectedDroneId] = useState<number>(1);
   const [isInterceptMode, setIsInterceptMode] = useState<boolean>(false);
 
-  // Flight Status of Selected Drone
+  // Vision Mode (Default: Military White Hot)
+  const [visionMode, setVisionMode] = useState<VisionMode>('THERMAL_WHITE_HOT');
+
+  // Flight Status & Anti-Jam Navigation
   const [status, setStatus] = useState<FlightStatus>({
     armed: false,
     flightMode: 'POS_HOLD',
@@ -50,7 +53,23 @@ export const App: React.FC = () => {
     rollDeg: 1.8,
     gpsStatus: 'RTK_LOCK',
     satellites: 26,
+    navigationSource: 'GPS_RTK',
   });
+
+  // Active Tactical Geofences (Default Authorized Killbox around target range)
+  const [zones, setZones] = useState<GeofenceZone[]>([
+    {
+      id: 'KB_ALPHA',
+      name: 'AUTHORIZED KILLBOX',
+      type: 'KILLBOX',
+      coords: [
+        [45.4635, 9.1890],
+        [45.4655, 9.1890],
+        [45.4655, 9.1915],
+        [45.4635, 9.1915],
+      ],
+    },
+  ]);
 
   // Shared Targets
   const [tracks, setTracks] = useState<TargetTrack[]>([
@@ -63,6 +82,7 @@ export const App: React.FC = () => {
       velocityX: 0.02,
       velocityY: -0.01,
       distanceMeters: 32.0,
+      inKillbox: true,
     },
     {
       trackId: 102,
@@ -73,6 +93,7 @@ export const App: React.FC = () => {
       velocityX: -0.005,
       velocityY: 0.0,
       distanceMeters: 45.0,
+      inKillbox: true,
     },
   ]);
 
@@ -89,7 +110,11 @@ export const App: React.FC = () => {
     activeAirborneRelaysCount: 1,
   });
 
-  // Target and drone movement physics loop (30 Hz)
+  // Check if designated target is inside active Killbox
+  const activeTrack = tracks.find((t) => t.trackId === designatedTrackId);
+  const targetInKillbox = activeTrack?.inKillbox ?? true;
+
+  // Animation Physics Loop (30 Hz)
   useEffect(() => {
     const interval = setInterval(() => {
       setTracks((prevTracks) => {
@@ -144,9 +169,7 @@ export const App: React.FC = () => {
     setStatus((prev) => ({ ...prev, flightMode: 'OFFBOARD' }));
     setSwarm((prev) =>
       prev.map((d) =>
-        d.droneId === selectedDroneId
-          ? { ...d, lockedTargetId: trackId, role: 'TRACKING' }
-          : d
+        d.droneId === selectedDroneId ? { ...d, lockedTargetId: trackId, role: 'TRACKING' } : d
       )
     );
   };
@@ -157,15 +180,15 @@ export const App: React.FC = () => {
     setStatus((prev) => ({ ...prev, flightMode: 'POS_HOLD' }));
     setSwarm((prev) =>
       prev.map((d) =>
-        d.droneId === selectedDroneId
-          ? { ...d, lockedTargetId: null, role: 'SCOUT' }
-          : d
+        d.droneId === selectedDroneId ? { ...d, lockedTargetId: null, role: 'SCOUT' } : d
       )
     );
   };
 
   const handleToggleIntercept = () => {
     if (!designatedTrackId) return;
+    if (!targetInKillbox && zones.some((z) => z.type === 'KILLBOX')) return;
+
     const nextState = !isInterceptMode;
     setIsInterceptMode(nextState);
     setStatus((prev) => ({
@@ -175,16 +198,44 @@ export const App: React.FC = () => {
     }));
   };
 
+  const handleToggleKillbox = () => {
+    if (zones.some((z) => z.type === 'KILLBOX')) {
+      setZones((prev) => prev.filter((z) => z.type !== 'KILLBOX'));
+    } else {
+      setZones((prev) => [
+        ...prev,
+        {
+          id: 'KB_ALPHA',
+          name: 'AUTHORIZED KILLBOX',
+          type: 'KILLBOX',
+          coords: [
+            [45.4635, 9.1890],
+            [45.4655, 9.1890],
+            [45.4655, 9.1915],
+            [45.4635, 9.1915],
+          ],
+        },
+      ]);
+    }
+  };
+
+  // Toggle GPS Jamming / Optical Flow Fallback
+  const handleToggleGpsJamming = () => {
+    const isGpsActive = status.navigationSource === 'GPS_RTK';
+    setStatus((prev) => ({
+      ...prev,
+      navigationSource: isGpsActive ? 'OPTICAL_FLOW_VISION' : 'GPS_RTK',
+      gpsStatus: isGpsActive ? 'NO_GPS' : 'RTK_LOCK',
+      satellites: isGpsActive ? 0 : 26,
+    }));
+  };
+
   const handleHandoffTarget = (trackId: number) => {
     const receiverId = selectedDroneId === 1 ? 2 : 1;
     setSwarm((prev) =>
       prev.map((d) => {
-        if (d.droneId === selectedDroneId) {
-          return { ...d, lockedTargetId: null, role: 'SCOUT' };
-        }
-        if (d.droneId === receiverId) {
-          return { ...d, lockedTargetId: trackId, role: 'TRACKING' };
-        }
+        if (d.droneId === selectedDroneId) return { ...d, lockedTargetId: null, role: 'SCOUT' };
+        if (d.droneId === receiverId) return { ...d, lockedTargetId: trackId, role: 'TRACKING' };
         return d;
       })
     );
@@ -220,7 +271,10 @@ export const App: React.FC = () => {
               selectedDroneId={selectedDroneId}
               designatedTrackId={designatedTrackId}
               isInterceptMode={isInterceptMode}
+              zones={zones}
+              targetInKillbox={targetInKillbox}
               onToggleIntercept={handleToggleIntercept}
+              onToggleKillbox={handleToggleKillbox}
             />
           </div>
           <div className="h-auto">
@@ -230,13 +284,16 @@ export const App: React.FC = () => {
 
         {/* Center/Right Column: AR Video HUD & Pilot Controls (8 cols) */}
         <div className="col-span-8 flex flex-col gap-3 min-h-0">
-          {/* Main AR Video HUD Display */}
+          {/* Main AR Video HUD Display with Thermal Vision */}
           <div className="flex-1 bg-black rounded-lg border border-tactical-border overflow-hidden relative shadow-2xl">
             <HudOverlay
               tracks={tracks}
               status={status}
               designatedTrackId={designatedTrackId}
               isInterceptMode={isInterceptMode}
+              visionMode={visionMode}
+              targetInKillbox={targetInKillbox}
+              onSetVisionMode={setVisionMode}
               onDesignateTarget={handleDesignateTarget}
               onBreakLock={handleBreakLock}
             />
@@ -259,7 +316,7 @@ export const App: React.FC = () => {
             {/* Pilot Action Bar */}
             <div className="col-span-5 bg-tactical-panel border border-tactical-border rounded-lg p-3 flex flex-col justify-between text-xs">
               <div className="font-bold text-slate-200 border-b border-tactical-border pb-1 mb-2 flex items-center justify-between">
-                <span>PILOT QUICK CONTROLS</span>
+                <span>PILOT TACTICAL CONTROLS</span>
                 <span className="text-[10px] text-tactical-accent">{currentDroneCallsign}</span>
               </div>
 
@@ -284,24 +341,22 @@ export const App: React.FC = () => {
                 </button>
               </div>
 
-              {/* Intercept / Collision Course Trigger */}
+              {/* Anti-Jam Optical Flow Toggle */}
               <div className="flex items-center justify-between text-[11px] bg-slate-900/80 p-2 rounded border border-slate-800 mt-2">
-                <span className="text-slate-400">Flight Action:</span>
-                {designatedTrackId ? (
-                  <button
-                    onClick={handleToggleIntercept}
-                    className={`font-bold px-2 py-0.5 rounded flex items-center gap-1 transition-all ${
-                      isInterceptMode
-                        ? 'bg-red-600 text-white animate-pulse'
-                        : 'bg-cyan-900 hover:bg-cyan-800 text-cyan-200 border border-cyan-600'
-                    }`}
-                  >
-                    <Crosshair className="w-3 h-3" />
-                    {isInterceptMode ? 'COLLISION COURSE ACTIVE' : 'ENGAGE: FLY TO TARGET'}
-                  </button>
-                ) : (
-                  <span className="font-bold text-cyan-400">SCANNING / PILOT READY</span>
-                )}
+                <span className="text-slate-400">Anti-Jam Mode:</span>
+                <button
+                  onClick={handleToggleGpsJamming}
+                  className={`px-2 py-0.5 rounded font-bold flex items-center gap-1 text-[10px] border transition-all ${
+                    status.navigationSource === 'OPTICAL_FLOW_VISION'
+                      ? 'bg-amber-500 text-slate-950 border-amber-300'
+                      : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                  }`}
+                >
+                  <RadioTower className="w-3 h-3" />
+                  {status.navigationSource === 'OPTICAL_FLOW_VISION'
+                    ? 'OPTICAL FLOW (ACTIVE)'
+                    : 'SIMULATE GPS JAMMING'}
+                </button>
               </div>
             </div>
           </div>
