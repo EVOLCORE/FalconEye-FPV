@@ -1,0 +1,12 @@
+{
+  "name": "falconeye-fpv-root",
+  "private": true,
+  "version": "1.0.0",
+  "description": "FalconEye FPV - Autonomous AI FPV Drone System",
+  "scripts": {
+    "server": "npm --prefix falconeye_esp run server",
+    "dev": "npm --prefix falconeye_esp run dev",
+    "build": "npm --prefix falconeye_esp run build",
+    "test": "python -m unittest discover -s tests/"
+  }
+}
