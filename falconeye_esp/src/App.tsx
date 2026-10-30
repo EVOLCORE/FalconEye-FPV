@@ -5,7 +5,7 @@ import { HudOverlay } from './components/HudOverlay';
 import { TacticalMap } from './components/TacticalMap';
 import { NetworkStatusWidget } from './components/NetworkStatusWidget';
 import { TargetListWidget } from './components/TargetListWidget';
-import { ShieldAlert, RotateCcw } from 'lucide-react';
+import { ShieldAlert, RotateCcw, Crosshair } from 'lucide-react';
 
 export const App: React.FC = () => {
   // Airborne Swarm Team
@@ -17,7 +17,7 @@ export const App: React.FC = () => {
       altitudeMeters: 45.0,
       headingDeg: 42.0,
       linkQualityPct: 95,
-      relayThroughDroneId: 0, // Direct connection to pilot
+      relayThroughDroneId: 0,
       role: 'SCOUT',
       lockedTargetId: null,
     },
@@ -27,16 +27,17 @@ export const App: React.FC = () => {
       batteryPct: 78,
       altitudeMeters: 18.0,
       headingDeg: 350.0,
-      linkQualityPct: 20, // Weak direct link -> Hopping through Falcon-1!
-      relayThroughDroneId: 1, // Airborne relay active!
+      linkQualityPct: 20,
+      relayThroughDroneId: 1,
       role: 'SCOUT',
       lockedTargetId: null,
     },
   ]);
 
   const [selectedDroneId, setSelectedDroneId] = useState<number>(1);
+  const [isInterceptMode, setIsInterceptMode] = useState<boolean>(false);
 
-  // Flight Status of Currently Selected Drone
+  // Flight Status of Selected Drone
   const [status, setStatus] = useState<FlightStatus>({
     armed: false,
     flightMode: 'POS_HOLD',
@@ -51,7 +52,7 @@ export const App: React.FC = () => {
     satellites: 26,
   });
 
-  // Shared Targets across all drones
+  // Shared Targets
   const [tracks, setTracks] = useState<TargetTrack[]>([
     {
       trackId: 101,
@@ -88,7 +89,7 @@ export const App: React.FC = () => {
     activeAirborneRelaysCount: 1,
   });
 
-  // Smooth target and drone animation loop (30 Hz)
+  // Target and drone movement physics loop (30 Hz)
   useEffect(() => {
     const interval = setInterval(() => {
       setTracks((prevTracks) => {
@@ -141,7 +142,6 @@ export const App: React.FC = () => {
   const handleDesignateTarget = (trackId: number) => {
     setDesignatedTrackId(trackId);
     setStatus((prev) => ({ ...prev, flightMode: 'OFFBOARD' }));
-    // Update swarm state
     setSwarm((prev) =>
       prev.map((d) =>
         d.droneId === selectedDroneId
@@ -153,6 +153,7 @@ export const App: React.FC = () => {
 
   const handleBreakLock = () => {
     setDesignatedTrackId(null);
+    setIsInterceptMode(false);
     setStatus((prev) => ({ ...prev, flightMode: 'POS_HOLD' }));
     setSwarm((prev) =>
       prev.map((d) =>
@@ -163,12 +164,19 @@ export const App: React.FC = () => {
     );
   };
 
-  // Swarm Target Handoff
+  const handleToggleIntercept = () => {
+    if (!designatedTrackId) return;
+    const nextState = !isInterceptMode;
+    setIsInterceptMode(nextState);
+    setStatus((prev) => ({
+      ...prev,
+      flightMode: nextState ? 'INTERCEPT' : 'OFFBOARD',
+      speedMps: nextState ? 28.0 : 12.0,
+    }));
+  };
+
   const handleHandoffTarget = (trackId: number) => {
     const receiverId = selectedDroneId === 1 ? 2 : 1;
-    const receiverCallsign = receiverId === 1 ? 'Falcon-1' : 'Falcon-2';
-
-    // Transfer target lock
     setSwarm((prev) =>
       prev.map((d) => {
         if (d.droneId === selectedDroneId) {
@@ -180,8 +188,6 @@ export const App: React.FC = () => {
         return d;
       })
     );
-
-    // Switch active display to the receiver drone
     handleSelectDrone(receiverId);
   };
 
@@ -204,15 +210,17 @@ export const App: React.FC = () => {
 
       {/* Main Tactical Grid Layout */}
       <div className="flex-1 grid grid-cols-12 gap-3 p-3 min-h-0 overflow-hidden">
-        {/* Left Column: Swarm Tactical Map & Network (4 cols) */}
+        {/* Left Column: SATELLITE MAP & Network (4 cols) */}
         <div className="col-span-4 flex flex-col gap-3 min-h-0">
-          <div className="flex-1 min-h-[280px]">
+          <div className="flex-1 min-h-[300px]">
             <TacticalMap
               tracks={tracks}
               status={status}
               swarm={swarm}
               selectedDroneId={selectedDroneId}
               designatedTrackId={designatedTrackId}
+              isInterceptMode={isInterceptMode}
+              onToggleIntercept={handleToggleIntercept}
             />
           </div>
           <div className="h-auto">
@@ -228,6 +236,7 @@ export const App: React.FC = () => {
               tracks={tracks}
               status={status}
               designatedTrackId={designatedTrackId}
+              isInterceptMode={isInterceptMode}
               onDesignateTarget={handleDesignateTarget}
               onBreakLock={handleBreakLock}
             />
@@ -275,11 +284,24 @@ export const App: React.FC = () => {
                 </button>
               </div>
 
+              {/* Intercept / Collision Course Trigger */}
               <div className="flex items-center justify-between text-[11px] bg-slate-900/80 p-2 rounded border border-slate-800 mt-2">
-                <span className="text-slate-400">Tracking Status:</span>
-                <span className="font-bold text-cyan-400">
-                  {designatedTrackId ? `LOCKED ON TARGET (#${designatedTrackId})` : 'PILOT READY / SCANNING'}
-                </span>
+                <span className="text-slate-400">Flight Action:</span>
+                {designatedTrackId ? (
+                  <button
+                    onClick={handleToggleIntercept}
+                    className={`font-bold px-2 py-0.5 rounded flex items-center gap-1 transition-all ${
+                      isInterceptMode
+                        ? 'bg-red-600 text-white animate-pulse'
+                        : 'bg-cyan-900 hover:bg-cyan-800 text-cyan-200 border border-cyan-600'
+                    }`}
+                  >
+                    <Crosshair className="w-3 h-3" />
+                    {isInterceptMode ? 'COLLISION COURSE ACTIVE' : 'ENGAGE: FLY TO TARGET'}
+                  </button>
+                ) : (
+                  <span className="font-bold text-cyan-400">SCANNING / PILOT READY</span>
+                )}
               </div>
             </div>
           </div>

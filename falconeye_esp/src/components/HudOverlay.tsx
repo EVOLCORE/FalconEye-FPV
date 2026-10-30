@@ -5,6 +5,7 @@ interface HudOverlayProps {
   tracks: TargetTrack[];
   status: FlightStatus;
   designatedTrackId: number | null;
+  isInterceptMode: boolean;
   onDesignateTarget: (trackId: number) => void;
   onBreakLock: () => void;
 }
@@ -13,6 +14,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
   tracks,
   status,
   designatedTrackId,
+  isInterceptMode,
   onDesignateTarget,
   onBreakLock,
 }) => {
@@ -34,7 +36,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
       ctx.fillStyle = '#080c14';
       ctx.fillRect(0, 0, width, height);
 
-      ctx.strokeStyle = 'rgba(6, 182, 212, 0.08)';
+      ctx.strokeStyle = isInterceptMode ? 'rgba(239, 68, 68, 0.12)' : 'rgba(6, 182, 212, 0.08)';
       ctx.lineWidth = 1;
       const gridSize = 40;
       for (let x = 0; x < width; x += gridSize) {
@@ -56,7 +58,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
       ctx.rotate((-status.rollDeg * Math.PI) / 180);
 
       const pitchOffset = (status.pitchDeg / 90) * (height / 2);
-      ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
+      ctx.strokeStyle = isInterceptMode ? 'rgba(239, 68, 68, 0.6)' : 'rgba(6, 182, 212, 0.4)';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(-120, pitchOffset);
@@ -65,7 +67,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
       ctx.lineTo(120, pitchOffset);
       ctx.stroke();
 
-      ctx.fillStyle = 'rgba(6, 182, 212, 0.7)';
+      ctx.fillStyle = isInterceptMode ? 'rgba(239, 68, 68, 0.8)' : 'rgba(6, 182, 212, 0.7)';
       ctx.font = '10px monospace';
       [-20, -10, 10, 20].forEach((deg) => {
         const y = pitchOffset - (deg / 90) * (height / 2);
@@ -81,7 +83,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
       ctx.restore();
 
       // 3. Central Bore Sight Crosshair
-      ctx.strokeStyle = 'rgba(6, 182, 212, 0.8)';
+      ctx.strokeStyle = isInterceptMode ? '#ef4444' : 'rgba(6, 182, 212, 0.8)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.arc(width / 2, height / 2, 8, 0, Math.PI * 2);
@@ -97,7 +99,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
       ctx.lineTo(width / 2, height / 2 + 16);
       ctx.stroke();
 
-      // 4. Target Bounding Boxes
+      // 4. Target Bounding Boxes & Intercept Guidance
       tracks.forEach((track) => {
         const isLocked = track.trackId === designatedTrackId;
         const bx = track.bbox.xMin * width;
@@ -127,15 +129,16 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
         if (isLocked) {
           ctx.strokeStyle = '#ef4444';
           ctx.beginPath();
-          ctx.moveTo(bx + bw / 2 - 6, by + bh / 2);
-          ctx.lineTo(bx + bw / 2 + 6, by + bh / 2);
-          ctx.moveTo(bx + bw / 2, by + bh / 2 - 6);
-          ctx.lineTo(bx + bw / 2, by + bh / 2 + 6);
+          ctx.moveTo(bx + bw / 2 - 8, by + bh / 2);
+          ctx.lineTo(bx + bw / 2 + 8, by + bh / 2);
+          ctx.moveTo(bx + bw / 2, by + bh / 2 - 8);
+          ctx.lineTo(bx + bw / 2, by + bh / 2 + 8);
           ctx.stroke();
 
-          // Tracking vector line
-          ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
-          ctx.setLineDash([4, 4]);
+          // Intercept flight line from center directly into target center
+          ctx.strokeStyle = isInterceptMode ? '#ef4444' : 'rgba(239, 68, 68, 0.5)';
+          ctx.lineWidth = isInterceptMode ? 2.5 : 1.5;
+          ctx.setLineDash(isInterceptMode ? [6, 3] : [4, 4]);
           ctx.beginPath();
           ctx.moveTo(width / 2, height / 2);
           ctx.lineTo(bx + bw / 2, by + bh / 2);
@@ -147,31 +150,33 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
         ctx.fillRect(bx, by - 18, bw, 18);
         ctx.fillStyle = '#0a0d14';
         ctx.font = 'bold 10px monospace';
-        const label = `${isLocked ? '🎯 ' : ''}#${track.trackId} ${track.className.toUpperCase()} ${(track.confidence * 100).toFixed(0)}%`;
+        const label = `${isLocked ? (isInterceptMode ? '💥 INTERCEPT ' : '🎯 LOCK ') : ''}#${track.trackId} ${track.className.toUpperCase()} ${(track.confidence * 100).toFixed(0)}%`;
         ctx.fillText(label, bx + 4, by - 5);
-
-        if (Math.abs(track.velocityX) > 0.01 || Math.abs(track.velocityY) > 0.01) {
-          const vx = track.velocityX * width * 0.5;
-          const vy = track.velocityY * height * 0.5;
-          ctx.strokeStyle = '#f59e0b';
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.moveTo(bx + bw / 2, by + bh / 2);
-          ctx.lineTo(bx + bw / 2 + vx, by + bh / 2 + vy);
-          ctx.stroke();
-        }
       });
 
-      // 5. Speed Tape & Altitude Tape
-      ctx.fillStyle = 'rgba(17, 23, 38, 0.7)';
+      // 5. Intercept Mode Banner
+      if (isInterceptMode && designatedTrackId) {
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.2)';
+        ctx.fillRect(width / 2 - 160, 52, 320, 26);
+        ctx.strokeStyle = '#ef4444';
+        ctx.strokeRect(width / 2 - 160, 52, 320, 26);
+        ctx.fillStyle = '#fee2e2';
+        ctx.font = 'bold 12px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('COLLISION COURSE: FLYING INTO TARGET', width / 2, 69);
+        ctx.textAlign = 'left';
+      }
+
+      // 6. Speed & Altitude Tapes
+      ctx.fillStyle = 'rgba(17, 23, 38, 0.75)';
       ctx.fillRect(16, height / 2 - 60, 60, 120);
       ctx.fillRect(width - 76, height / 2 - 60, 60, 120);
 
-      ctx.fillStyle = '#06b6d4';
+      ctx.fillStyle = isInterceptMode ? '#ef4444' : '#06b6d4';
       ctx.font = 'bold 12px monospace';
       ctx.fillText('SPEED', 22, height / 2 - 40);
       ctx.font = 'bold 16px monospace';
-      ctx.fillText(`${status.speedMps.toFixed(1)}`, 22, height / 2);
+      ctx.fillText(`${(status.speedMps * (isInterceptMode ? 2.2 : 1.0)).toFixed(1)}`, 22, height / 2);
       ctx.font = '10px monospace';
       ctx.fillText('m/s', 22, height / 2 + 16);
 
@@ -182,10 +187,10 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
       ctx.font = '10px monospace';
       ctx.fillText('m', width - 68, height / 2 + 16);
 
-      // 6. Heading Tape (Top)
-      ctx.fillStyle = 'rgba(17, 23, 38, 0.7)';
+      // Heading Tape
+      ctx.fillStyle = 'rgba(17, 23, 38, 0.75)';
       ctx.fillRect(width / 2 - 80, 16, 160, 28);
-      ctx.strokeStyle = '#06b6d4';
+      ctx.strokeStyle = isInterceptMode ? '#ef4444' : '#06b6d4';
       ctx.strokeRect(width / 2 - 80, 16, 160, 28);
       ctx.fillStyle = '#f8fafc';
       ctx.font = 'bold 13px monospace';
@@ -198,7 +203,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
 
     render();
     return () => cancelAnimationFrame(animationFrameId);
-  }, [tracks, status, designatedTrackId]);
+  }, [tracks, status, designatedTrackId, isInterceptMode]);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -234,7 +239,7 @@ export const HudOverlay: React.FC<HudOverlayProps> = ({
         className="w-full h-full object-contain cursor-crosshair"
       />
       <div className="absolute bottom-3 left-4 text-[10px] bg-slate-900/85 border border-slate-700 text-slate-300 px-2 py-1 rounded backdrop-blur">
-        🎯 <span className="text-tactical-accent font-bold">CLICK-TO-TRACK:</span> Click any spotted target box to lock tracking
+        🎯 <span className="text-tactical-accent font-bold">CLICK-TO-TRACK:</span> Click any target to lock tracking
       </div>
     </div>
   );
