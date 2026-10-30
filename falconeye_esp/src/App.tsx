@@ -1,34 +1,62 @@
 import React, { useState, useEffect } from 'react';
-import { TargetTrack, Telemetry, FalconNetStatus } from './types';
+import { TargetTrack, FlightStatus, FalconNetStatus, SwarmDroneInfo } from './types';
 import { HeaderBar } from './components/HeaderBar';
 import { HudOverlay } from './components/HudOverlay';
 import { TacticalMap } from './components/TacticalMap';
 import { NetworkStatusWidget } from './components/NetworkStatusWidget';
 import { TargetListWidget } from './components/TargetListWidget';
-import { Play, Pause, RotateCcw, ShieldAlert } from 'lucide-react';
+import { ShieldAlert, RotateCcw } from 'lucide-react';
 
 export const App: React.FC = () => {
-  // Telemetry State
-  const [telemetry, setTelemetry] = useState<Telemetry>({
+  // Airborne Swarm Team
+  const [swarm, setSwarm] = useState<SwarmDroneInfo[]>([
+    {
+      droneId: 1,
+      callsign: 'Falcon-1',
+      batteryPct: 91,
+      altitudeMeters: 45.0,
+      headingDeg: 42.0,
+      linkQualityPct: 95,
+      relayThroughDroneId: 0, // Direct connection to pilot
+      role: 'SCOUT',
+      lockedTargetId: null,
+    },
+    {
+      droneId: 2,
+      callsign: 'Falcon-2',
+      batteryPct: 78,
+      altitudeMeters: 18.0,
+      headingDeg: 350.0,
+      linkQualityPct: 20, // Weak direct link -> Hopping through Falcon-1!
+      relayThroughDroneId: 1, // Airborne relay active!
+      role: 'SCOUT',
+      lockedTargetId: null,
+    },
+  ]);
+
+  const [selectedDroneId, setSelectedDroneId] = useState<number>(1);
+
+  // Flight Status of Currently Selected Drone
+  const [status, setStatus] = useState<FlightStatus>({
     armed: false,
     flightMode: 'POS_HOLD',
-    batteryPct: 88,
-    batteryVoltage: 22.4, // 6S LiPo
-    altitudeMeters: 18.5,
-    groundSpeedMps: 12.4,
+    batteryPct: 91,
+    batteryVoltage: 22.8,
+    altitudeMeters: 45.0,
+    speedMps: 12.0,
     headingDeg: 42.0,
-    pitchDeg: -4.5,
-    rollDeg: 2.1,
-    gpsFix: 'RTK_FIXED',
-    satellites: 24,
+    pitchDeg: -3.5,
+    rollDeg: 1.8,
+    gpsStatus: 'RTK_LOCK',
+    satellites: 26,
   });
 
-  // Active Target Tracks
+  // Shared Targets across all drones
   const [tracks, setTracks] = useState<TargetTrack[]>([
     {
       trackId: 101,
       className: 'vehicle',
-      confidence: 0.94,
+      confidence: 0.95,
       state: 'TRACKING',
       bbox: { xMin: 0.42, yMin: 0.48, xMax: 0.58, yMax: 0.62 },
       velocityX: 0.02,
@@ -47,27 +75,26 @@ export const App: React.FC = () => {
     },
   ]);
 
-  // Locked Target ID
   const [designatedTrackId, setDesignatedTrackId] = useState<number | null>(null);
 
-  // FalconNet Multi-Provider Status
+  // Multi-Provider Network Health
   const [network, setNetwork] = useState<FalconNetStatus>({
     activeTransport: 'WIFI6',
-    wifi6: { connected: true, rssi: -58, latencyMs: 14, throughputKbps: 48000 },
-    mesh: { connected: true, latencyMs: 22, details: '1 Hop via Ground Relay' },
-    cellular: { connected: true, latencyMs: 38, details: '5G SA (Standby)' },
-    starlink: { connected: true, latencyMs: 44, details: 'Satcom Ready' },
-    packetLossPct: 0.1,
+    wifi6: { connected: true, rssi: -56, latencyMs: 12 },
+    mesh: { connected: true, latencyMs: 18, details: 'In-Air Drone Mesh Active' },
+    cellular: { connected: true, latencyMs: 35, details: '5G SA Standby' },
+    starlink: { connected: true, latencyMs: 42, details: 'Satcom Ready' },
+    packetLossPct: 0.05,
+    activeAirborneRelaysCount: 1,
   });
 
-  // Simulation physics loop (30 Hz)
+  // Smooth target and drone animation loop (30 Hz)
   useEffect(() => {
     const interval = setInterval(() => {
       setTracks((prevTracks) => {
         const t = Date.now() / 1000;
         return prevTracks.map((tr) => {
           if (tr.trackId === 101) {
-            // Vehicle smoothly cruising in a gentle orbit
             const cx = 0.5 + 0.18 * Math.sin(t * 0.7);
             const cy = 0.55 + 0.08 * Math.cos(t * 0.5);
             const w = 0.14;
@@ -83,14 +110,13 @@ export const App: React.FC = () => {
         });
       });
 
-      // Subtle drone heading & attitude oscillation
-      setTelemetry((prev) => {
+      setStatus((prev) => {
         const t = Date.now() / 1000;
         return {
           ...prev,
           headingDeg: (prev.headingDeg + 0.05) % 360,
-          rollDeg: 2.0 * Math.sin(t * 1.2),
-          pitchDeg: -4.0 + 1.5 * Math.cos(t * 0.8),
+          rollDeg: 1.8 * Math.sin(t * 1.2),
+          pitchDeg: -3.5 + 1.2 * Math.cos(t * 0.8),
         };
       });
     }, 33);
@@ -98,34 +124,94 @@ export const App: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Handlers for Operator Controls
+  // Handlers
+  const handleSelectDrone = (droneId: number) => {
+    setSelectedDroneId(droneId);
+    const targetDrone = swarm.find((d) => d.droneId === droneId);
+    if (targetDrone) {
+      setStatus((prev) => ({
+        ...prev,
+        batteryPct: targetDrone.batteryPct,
+        altitudeMeters: targetDrone.altitudeMeters,
+        headingDeg: targetDrone.headingDeg,
+      }));
+    }
+  };
+
   const handleDesignateTarget = (trackId: number) => {
     setDesignatedTrackId(trackId);
-    setTelemetry((prev) => ({ ...prev, flightMode: 'OFFBOARD' }));
+    setStatus((prev) => ({ ...prev, flightMode: 'OFFBOARD' }));
+    // Update swarm state
+    setSwarm((prev) =>
+      prev.map((d) =>
+        d.droneId === selectedDroneId
+          ? { ...d, lockedTargetId: trackId, role: 'TRACKING' }
+          : d
+      )
+    );
   };
 
   const handleBreakLock = () => {
     setDesignatedTrackId(null);
-    setTelemetry((prev) => ({ ...prev, flightMode: 'POS_HOLD' }));
+    setStatus((prev) => ({ ...prev, flightMode: 'POS_HOLD' }));
+    setSwarm((prev) =>
+      prev.map((d) =>
+        d.droneId === selectedDroneId
+          ? { ...d, lockedTargetId: null, role: 'SCOUT' }
+          : d
+      )
+    );
+  };
+
+  // Swarm Target Handoff
+  const handleHandoffTarget = (trackId: number) => {
+    const receiverId = selectedDroneId === 1 ? 2 : 1;
+    const receiverCallsign = receiverId === 1 ? 'Falcon-1' : 'Falcon-2';
+
+    // Transfer target lock
+    setSwarm((prev) =>
+      prev.map((d) => {
+        if (d.droneId === selectedDroneId) {
+          return { ...d, lockedTargetId: null, role: 'SCOUT' };
+        }
+        if (d.droneId === receiverId) {
+          return { ...d, lockedTargetId: trackId, role: 'TRACKING' };
+        }
+        return d;
+      })
+    );
+
+    // Switch active display to the receiver drone
+    handleSelectDrone(receiverId);
   };
 
   const toggleArm = () => {
-    setTelemetry((prev) => ({ ...prev, armed: !prev.armed }));
+    setStatus((prev) => ({ ...prev, armed: !prev.armed }));
   };
+
+  const currentDroneCallsign = selectedDroneId === 1 ? 'Falcon-1' : 'Falcon-2';
 
   return (
     <div className="flex flex-col h-screen w-screen bg-tactical-dark text-slate-100 overflow-hidden font-mono">
-      {/* Top Header & Status Bar */}
-      <HeaderBar telemetry={telemetry} designatedTrackId={designatedTrackId} />
+      {/* Top Header & Multi-Drone Switcher */}
+      <HeaderBar
+        status={status}
+        designatedTrackId={designatedTrackId}
+        swarm={swarm}
+        selectedDroneId={selectedDroneId}
+        onSelectDrone={handleSelectDrone}
+      />
 
       {/* Main Tactical Grid Layout */}
       <div className="flex-1 grid grid-cols-12 gap-3 p-3 min-h-0 overflow-hidden">
-        {/* Left Column: Tactical Map & Multi-Provider Network (4 cols) */}
+        {/* Left Column: Swarm Tactical Map & Network (4 cols) */}
         <div className="col-span-4 flex flex-col gap-3 min-h-0">
           <div className="flex-1 min-h-[280px]">
             <TacticalMap
               tracks={tracks}
-              telemetry={telemetry}
+              status={status}
+              swarm={swarm}
+              selectedDroneId={selectedDroneId}
               designatedTrackId={designatedTrackId}
             />
           </div>
@@ -134,63 +220,65 @@ export const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Center Column: AR Video HUD & Flight Control Deck (8 cols) */}
+        {/* Center/Right Column: AR Video HUD & Pilot Controls (8 cols) */}
         <div className="col-span-8 flex flex-col gap-3 min-h-0">
-          {/* Main AR HUD Display */}
+          {/* Main AR Video HUD Display */}
           <div className="flex-1 bg-black rounded-lg border border-tactical-border overflow-hidden relative shadow-2xl">
             <HudOverlay
               tracks={tracks}
-              telemetry={telemetry}
+              status={status}
               designatedTrackId={designatedTrackId}
               onDesignateTarget={handleDesignateTarget}
               onBreakLock={handleBreakLock}
             />
           </div>
 
-          {/* Bottom Action Deck: Target List + Operator Command Bar */}
+          {/* Bottom Deck: Spotted Targets + Pilot Action Bar */}
           <div className="h-44 grid grid-cols-12 gap-3">
-            {/* Target Inventory (7 cols) */}
+            {/* Target Inventory */}
             <div className="col-span-7 h-full">
               <TargetListWidget
                 tracks={tracks}
                 designatedTrackId={designatedTrackId}
+                selectedDroneCallsign={currentDroneCallsign}
                 onDesignateTarget={handleDesignateTarget}
                 onBreakLock={handleBreakLock}
+                onHandoffTarget={handleHandoffTarget}
               />
             </div>
 
-            {/* Quick Pilot Action Bar (5 cols) */}
+            {/* Pilot Action Bar */}
             <div className="col-span-5 bg-tactical-panel border border-tactical-border rounded-lg p-3 flex flex-col justify-between text-xs">
               <div className="font-bold text-slate-200 border-b border-tactical-border pb-1 mb-2 flex items-center justify-between">
-                <span>OPERATOR QUICK COMMANDS</span>
-                <span className="text-[10px] text-tactical-accent">STANDBY LINK</span>
+                <span>PILOT QUICK CONTROLS</span>
+                <span className="text-[10px] text-tactical-accent">{currentDroneCallsign}</span>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={toggleArm}
                   className={`py-2 px-2 rounded font-bold transition-all flex items-center justify-center gap-1.5 ${
-                    telemetry.armed
+                    status.armed
                       ? 'bg-tactical-alert hover:bg-red-700 text-white'
                       : 'bg-emerald-600 hover:bg-emerald-500 text-white'
                   }`}
                 >
                   <ShieldAlert className="w-4 h-4" />
-                  {telemetry.armed ? 'EMERGENCY DISARM' : 'ARM MOTORS'}
+                  {status.armed ? 'EMERGENCY STOP' : 'START MOTORS'}
                 </button>
 
                 <button
-                  onClick={() => setTelemetry((prev) => ({ ...prev, flightMode: 'RTL' }))}
+                  onClick={() => setStatus((prev) => ({ ...prev, flightMode: 'RTL' }))}
                   className="bg-amber-600/80 hover:bg-amber-500 text-white font-bold py-2 px-2 rounded flex items-center justify-center gap-1.5"
                 >
-                  <RotateCcw className="w-4 h-4" /> RETURN HOME (RTL)
+                  <RotateCcw className="w-4 h-4" /> FLY HOME (RTL)
                 </button>
               </div>
 
               <div className="flex items-center justify-between text-[11px] bg-slate-900/80 p-2 rounded border border-slate-800 mt-2">
-                <span className="text-slate-400">Autonomy Status:</span>
+                <span className="text-slate-400">Tracking Status:</span>
                 <span className="font-bold text-cyan-400">
-                  {designatedTrackId ? `IBVS LOCKED (#${designatedTrackId})` : 'PILOT MANUAL READY'}
+                  {designatedTrackId ? `LOCKED ON TARGET (#${designatedTrackId})` : 'PILOT READY / SCANNING'}
                 </span>
               </div>
             </div>

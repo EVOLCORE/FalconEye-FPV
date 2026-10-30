@@ -13,31 +13,41 @@ export interface TargetTrack {
   bbox: BoundingBox;
   velocityX: number;
   velocityY: number;
-  latitude?: number;
-  longitude?: number;
   distanceMeters?: number;
   isDesignated?: boolean;
+  trackingDroneId?: number;
 }
 
-export interface Telemetry {
+export interface FlightStatus {
   armed: boolean;
   flightMode: 'MANUAL' | 'ALT_HOLD' | 'POS_HOLD' | 'OFFBOARD' | 'RTL';
   batteryPct: number;
   batteryVoltage: number;
   altitudeMeters: number;
-  groundSpeedMps: number;
+  speedMps: number;
   headingDeg: number;
   pitchDeg: number;
   rollDeg: number;
-  gpsFix: 'NONE' | '2D' | '3D' | 'RTK_FIXED';
+  gpsStatus: 'NO_GPS' | '3D_FIX' | 'RTK_LOCK';
   satellites: number;
+}
+
+export interface SwarmDroneInfo {
+  droneId: number;
+  callsign: string;
+  batteryPct: number;
+  altitudeMeters: number;
+  headingDeg: number;
+  linkQualityPct: number;
+  relayThroughDroneId: number; // 0 if direct to pilot
+  role: 'SCOUT' | 'TRACKING' | 'RELAY' | 'RTH';
+  lockedTargetId: number | null;
 }
 
 export interface NetworkProviderStatus {
   connected: boolean;
   rssi?: number;
   latencyMs: number;
-  throughputKbps?: number;
   details?: string;
 }
 
@@ -48,4 +58,5 @@ export interface FalconNetStatus {
   cellular: NetworkProviderStatus;
   starlink: NetworkProviderStatus;
   packetLossPct: number;
+  activeAirborneRelaysCount: number;
 }

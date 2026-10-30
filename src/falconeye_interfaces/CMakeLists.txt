@@ -18,6 +18,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/TargetDesignation.msg"
   "msg/GuidanceCommand.msg"
   "msg/NetworkStatus.msg"
+  "msg/SwarmMember.msg"
+  "msg/SharedTarget.msg"
+  "msg/TargetHandoffCommand.msg"
   DEPENDENCIES std_msgs geometry_msgs
 )
 
