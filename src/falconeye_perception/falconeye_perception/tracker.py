@@ -1,6 +1,7 @@
 """
-FalconEye FPV - Multi-Object Tracker (MOT)
-Maintains persistent track IDs, filters noisy bounding boxes, and estimates 2D velocity.
+FalconEye FPV - Multi-Object Tracker (MOT) with Ego-Motion Compensation
+Maintains persistent track IDs, filters noisy bounding boxes, estimates 2D velocity,
+and compensates for drone pitch/yaw rotations using onboard IMU telemetry.
 """
 
 import time
@@ -28,6 +29,17 @@ class TrackedEntity:
     @staticmethod
     def _get_center(bbox: Tuple[float, float, float, float]) -> Tuple[float, float]:
         return (bbox[0] + bbox[2]) / 2.0, (bbox[1] + bbox[3]) / 2.0
+
+    def apply_ego_motion(self, shift_x: float, shift_y: float):
+        """Compensate bounding box for drone camera rotation."""
+        self.bbox = (
+            self.bbox[0] - shift_x,
+            self.bbox[1] - shift_y,
+            self.bbox[2] - shift_x,
+            self.bbox[3] - shift_y
+        )
+        self.center_x -= shift_x
+        self.center_y -= shift_y
 
     def update(self, new_bbox: Tuple[float, float, float, float], confidence: float, dt: float):
         """Update track with new matched detection."""
@@ -62,7 +74,7 @@ class TrackedEntity:
 
 
 class FalconEyeTracker:
-    """Multi-object tracker with IoU association and velocity estimation."""
+    """Multi-object tracker with IoU association and IMU motion compensation."""
     def __init__(self, iou_threshold: float = 0.3, max_lost_frames: int = 20):
         self.iou_threshold = iou_threshold
         self.max_lost_frames = max_lost_frames
@@ -90,28 +102,41 @@ class FalconEyeTracker:
             return 0.0
         return inter_area / union_area
 
-    def update(self, detections: List[Dict]) -> List[TrackedEntity]:
+    def update(
+        self,
+        detections: List[Dict],
+        gyro_pitch_rad_s: float = 0.0,
+        gyro_yaw_rad_s: float = 0.0
+    ) -> List[TrackedEntity]:
         """
         Update tracks with incoming detections from perception model.
         detections format: list of dicts with keys ['bbox', 'class_name', 'confidence']
+        gyro_pitch_rad_s, gyro_yaw_rad_s: IMU angular rates to compensate for camera rotation.
         """
         current_time = time.time()
         dt = current_time - self._last_frame_time
         self._last_frame_time = current_time
 
-        # Match existing tracks with detections via greedy IoU assignment
+        # 1. Apply IMU Ego-Motion Compensation to existing tracks
+        if abs(gyro_pitch_rad_s) > 0.01 or abs(gyro_yaw_rad_s) > 0.01:
+            # Approximate optical displacement in normalized frame coordinates (assuming ~80 deg FOV)
+            fov_rad = 1.396  # ~80 degrees
+            shift_x = (gyro_yaw_rad_s * dt) / fov_rad
+            shift_y = (gyro_pitch_rad_s * dt) / fov_rad
+            for track in self.tracks.values():
+                track.apply_ego_motion(shift_x, shift_y)
+
+        # 2. Match existing tracks with detections via greedy IoU assignment
         unmatched_detections = list(range(len(detections)))
         unmatched_tracks = list(self.tracks.keys())
 
         matched_pairs = []
         if self.tracks and detections:
-            # Build IoU cost matrix
             for track_id, track in self.tracks.items():
                 best_iou = self.iou_threshold
                 best_det_idx = -1
                 for det_idx in unmatched_detections:
                     det = detections[det_idx]
-                    # Only match if same class
                     if det['class_name'] == track.class_name:
                         iou = self.compute_iou(track.bbox, det['bbox'])
                         if iou > best_iou:
@@ -125,16 +150,16 @@ class FalconEyeTracker:
                     if track_id in unmatched_tracks:
                         unmatched_tracks.remove(track_id)
 
-        # Update matched tracks
+        # 3. Update matched tracks
         for track_id, det_idx in matched_pairs:
             det = detections[det_idx]
             self.tracks[track_id].update(det['bbox'], det['confidence'], dt)
 
-        # Mark unmatched tracks as missed
+        # 4. Mark unmatched tracks as missed
         for track_id in unmatched_tracks:
             self.tracks[track_id].mark_missed()
 
-        # Create new tracks for unmatched detections
+        # 5. Create new tracks for unmatched detections
         for det_idx in unmatched_detections:
             det = detections[det_idx]
             new_track = TrackedEntity(
@@ -146,7 +171,7 @@ class FalconEyeTracker:
             self.tracks[self._next_track_id] = new_track
             self._next_track_id += 1
 
-        # Purge dead/lost tracks
+        # 6. Purge dead tracks
         dead_tracks = [t_id for t_id, t in self.tracks.items() if t.consecutive_lost_frames > self.max_lost_frames]
         for t_id in dead_tracks:
             del self.tracks[t_id]
