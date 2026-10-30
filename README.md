@@ -14,7 +14,7 @@
 
 ---
 
-## 🦅 System Overview
+## System Overview
 
 **FalconEye FPV** is an enterprise-grade, open-source autonomous FPV drone ecosystem engineered for high-speed aerial target recognition, visual guidance, collaborative multi-drone swarms, and resilient multi-provider communications.
 
@@ -22,64 +22,64 @@ Whether tracking moving vehicles from high altitude, operating in GPS-jammed env
 
 ---
 
-## ⚡ Key Capabilities
+## Key Capabilities
 
-### 1. 👁️ Edge AI Vision & Aerial Small-Object Detection
-* **YOLO11-Aerial with P2 Micro-Head:** Custom 4-head neural network configuration incorporating a high-resolution P2 layer ($160 \times 160$ feature map) to detect distant vehicles ($10 \times 10$ pixels) and pedestrians from altitudes of 30–100m.
+### 1. Edge AI Vision & Aerial Small-Object Detection
+* **YOLO11-Aerial with P2 Micro-Head:** Custom 4-head neural network configuration incorporating a high-resolution P2 layer (160x160 feature map) to detect distant vehicles (10x10 pixels) and pedestrians from altitudes of 30-100m.
 * **Modular Inference Engine:** Pluggable backends supporting **NVIDIA TensorRT** (zero-copy GPU execution on Jetson Orin), **ONNX Runtime** (CPU/CUDA), and synthetic simulation engines.
-* **IMU-Compensated ByteTracker:** Fuses flight controller gyro rates $(\omega_{pitch}, \omega_{yaw})$ to subtract camera tilt during aggressive maneuvers, preventing lost target IDs during high-g bank turns.
+* **IMU-Compensated ByteTracker:** Fuses flight controller gyro rates to subtract camera tilt during aggressive maneuvers, preventing lost target IDs during high-g bank turns.
 
-### 2. 🎯 Visual Guidance & Direct Collision Intercept ("Fly into Target")
-* **Image-Based Visual Servoing (IBVS):** 3-axis PID controller translating target screen error directly into forward velocity ($v_x$), vertical rate ($v_z$), and yaw rate ($\dot{\psi}$).
-* **Proportional Navigation (PN) Intercept:** Calculates lead-point collision trajectories ($P_{impact} = P_t + V_t \cdot t_{go}$) to fly the drone directly into moving targets with live closing speed and Time-To-Impact (TTI) readouts.
+### 2. Visual Guidance & Direct Collision Intercept ("Fly into Target")
+* **Image-Based Visual Servoing (IBVS):** 3-axis PID controller translating target screen error directly into forward velocity, vertical rate, and yaw rate.
+* **Proportional Navigation (PN) Intercept:** Calculates lead-point collision trajectories to fly the drone directly into moving targets with live closing speed and Time-To-Impact (TTI) readouts.
 
-### 3. 🔥 Military Thermal & Night Vision (FLIR / Infrared)
+### 3. Military Thermal & Night Vision (FLIR / Infrared)
 * **Military White-Hot Standard:** Cold terrain appears dark while hot vehicle engines, exhausts, and human body heat glow bright white.
 * **Multi-Palette Switcher:** Instant toggles for **Black-Hot** (inverted contrast), **Ironbow** (high-contrast rainbow heat spectrum), and standard **Daylight** optical feeds.
 
-### 4. 🗺️ Photorealistic Satellite Map & Interactive Killboxes
+### 4. Photorealistic Satellite Map & Interactive Killboxes
 * **Global Satellite Imagery:** Integrated high-resolution satellite basemap (Esri World Imagery) displaying real terrain, roads, fields, and structures.
 * **Camera FOV Footprint:** Real-time polygon projected onto the ground showing the exact ground area visible through the drone's lens.
 * **Authorized Engagement Killboxes:** Draw and arm custom Killbox zones (Red dashed polygons) on the map. The system strictly enforces safety containment: targets inside are cleared for intercept, while targets outside are held in standoff loiter.
 
-### 5. 📡 GPS-Denied / Anti-Jamming Vision Navigation (Optical Flow)
+### 5. GPS-Denied / Anti-Jamming Vision Navigation (Optical Flow)
 * **Visual Inertial Odometry (VIO):** Uses camera optical flow with gyro derotation to estimate ground speed and dead-reckoning position when GPS satellites are jammed or unavailable.
 * **Seamless Fallback:** Instantly switches navigation source from `GPS (RTK)` to `OPTICAL FLOW (ANTI-JAM ACTIVE)` with zero flight interruption.
 
-### 6. 🌐 FalconNet Multi-Provider Resilient Network
+### 6. FalconNet Multi-Provider Resilient Network
 * **Multi-Transport Redundancy:** Bonds and monitors 4 concurrent network links:
   1. **Direct Tactical Wi-Fi 6** (High-speed local LOS < 2 km)
   2. **Ad-Hoc RF Mesh** (802.11s / BATMAN-adv relay hopping)
   3. **Cellular 4G/5G LTE** (Unlimited BVLOS backhaul)
   4. **Satellite Starlink** (Austere / remote ground station backhaul)
 * **3-Tier Priority QoS Engine:**
-  * *Priority 0 (Critical):* Emergency disarm, heartbeats, and RC commands duplicated over *all* healthy links simultaneously.
+  * *Priority 0 (Critical):* Emergency disarm, heartbeats, and RC commands duplicated over all healthy links simultaneously.
   * *Priority 1 (Flight Data):* Dynamically routed to the single lowest-latency active link.
   * *Priority 2 (Live Video):* Routed to the highest-bandwidth link with adaptive bitrate scaling.
 
-### 7. 🛰️ FalconSwarm Multi-Drone Airborne Mesh Sharing
+### 7. FalconSwarm Multi-Drone Airborne Mesh Sharing
 * **Airborne Relay Hopping:** If Drone 2 flies low into a valley or behind a structure, Drone 1 automatically acts as a flying relay tower to pass video and flight controls back to the pilot.
 * **Shared Target Picture:** Sightings from multiple drones are fused into a single target registry based on GPS distance, eliminating duplicate boxes on the map.
 * **One-Click Target Handoff:** Transfer an active visual tracking lock from Drone 1 to Drone 2 with a single click, allowing low-battery drones to safely return home.
 
-### 8. 🔌 Physical Flight Controller Hardware Bridge
+### 8. Physical Flight Controller Hardware Bridge
 * **Dual-Protocol Auto-Detection:** Automatically scans USB/COM ports to connect physical flight controllers on the bench:
   * **PX4 Autopilot / ArduPilot** via MAVLink 2.0 @ 921,600 / 57,600 baud.
   * **Betaflight / INAV** via MSP (MultiWii Serial Protocol) @ 115,200 baud.
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 ```
                     +------------------------------------+
                     |   FALCONEYE ESP GROUND STATION     |
-                    |   • Satellite Map & Killboxes      |
-                    |   • AR Video HUD (Thermal / Day)   |
-                    |   • "Click-to-Track" & Intercept   |
-                    |   • Multi-Drone Swarm Switcher     |
+                    |   - Satellite Map & Killboxes      |
+                    |   - AR Video HUD (Thermal / Day)   |
+                    |   - Click-to-Track & Intercept     |
+                    |   - Multi-Drone Swarm Switcher     |
                     +-----------------+------------------+
-                                      ▲
+                                      ^
                                       | FalconNet Multi-Link
                                       | [Wi-Fi 6 | Mesh | 4G/5G | Starlink]
                                       v
@@ -105,15 +105,15 @@ Whether tracking moving vehicles from high altitude, operating in GPS-jammed env
                                      v
 +-------------------------------------------------------------------------+
 |                FLIGHT CONTROLLER (PX4 Autopilot / Betaflight)           |
-|  • EKF2 State Estimator (GPS, Baro, IMU, Optical Flow)                  |
-|  • High-Rate Motor Mixer (1 - 8 kHz DShot)                              |
-|  • Hardware Safety Failsafes & Immediate Pilot Stick Manual Override    |
+|  - EKF2 State Estimator (GPS, Baro, IMU, Optical Flow)                  |
+|  - High-Rate Motor Mixer (1 - 8 kHz DShot)                              |
+|  - Hardware Safety Failsafes & Immediate Pilot Stick Manual Override    |
 +-------------------------------------------------------------------------+
 ```
 
 ---
 
-## 📂 Repository Monorepo Structure
+## Repository Monorepo Structure
 
 ```
 falconeye-fpv/
@@ -179,7 +179,7 @@ falconeye-fpv/
 
 ---
 
-## 🚀 Quick Start Guide
+## Quick Start Guide
 
 ### 1. Launch the Operator Ground Station
 Start the local server straight from the project root:
@@ -231,13 +231,13 @@ python ai_models/export/export_tensorrt.py --weights runs/aerial_train/weights/b
 
 ---
 
-## 🛠️ Recommended Hardware Bill of Materials (BOM)
+## Recommended Hardware Bill of Materials (BOM)
 
 | Component | Recommended Hardware | Purpose |
 | :--- | :--- | :--- |
 | **Airframe** | 7-inch Long Range Carbon Fiber Frame (e.g. Chimera7 / Mark4 7") | Optimal payload capacity for companion computer + battery |
 | **Motors & Props** | 2806.5 / 2807 1300KV Motors + 7x4x3 HQ Props | High thrust, smooth high-speed pursuit |
-| **Companion Computer** | **NVIDIA Jetson Orin Nano (8GB)** on custom micro-carrier OR **Raspberry Pi 5 + Hailo-8 AI HAT** | 20–40 TOPS edge AI inference onboard |
+| **Companion Computer** | **NVIDIA Jetson Orin Nano (8GB)** on custom micro-carrier OR **Raspberry Pi 5 + Hailo-8 AI HAT** | 20-40 TOPS edge AI inference onboard |
 | **Flight Controller** | Holybro Pixhawk 6C / SpeedyBee F405 V4 / Matek H743 | Low-level motor mixing, IMU, and safety failsafes |
 | **Camera (Day / Low-Light)** | Sony IMX477 / IMX708 MIPI-CSI (Global Shutter preferred) | Low-latency 60+ FPS visual tracking |
 | **Thermal Camera** | Infiray Mini / FLIR Boson / Lepton 3.5 (USB or MIPI) | Night reconnaissance and engine heat tracking |
@@ -246,7 +246,7 @@ python ai_models/export/export_tensorrt.py --weights runs/aerial_train/weights/b
 
 ---
 
-## ⚖️ Safety & Legal Notice
+## Safety & Legal Notice
 
 FalconEye FPV includes autonomous tracking and collision guidance algorithms. 
 * Always maintain a physical **RC Manual Kill Switch** programmed to instantly disarm or take manual stick control during field testing.
@@ -254,5 +254,5 @@ FalconEye FPV includes autonomous tracking and collision guidance algorithms.
 
 ---
 
-## 📄 License
+## License
 FalconEye FPV is open-source software licensed under the **Apache License 2.0**.
