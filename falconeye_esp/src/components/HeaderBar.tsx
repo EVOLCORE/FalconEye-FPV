@@ -19,14 +19,21 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 }) => {
   return (
     <header className="h-14 border-b border-tactical-border bg-tactical-panel/95 backdrop-blur px-4 flex items-center justify-between text-xs tracking-wider">
-      {/* Brand & Multi-Drone Selector */}
+      {/* Brand with Modern Vector FalconEye Emblem */}
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded bg-cyan-950 border border-tactical-accent flex items-center justify-center text-tactical-accent font-black">
-            FE
-          </div>
-          <div className="font-bold text-sm text-slate-100 hidden sm:block">
-            FALCONEYE
+        <div className="flex items-center gap-2.5">
+          <img
+            src="/falconeye_logo.svg"
+            alt="FalconEye Logo"
+            className="h-9 w-9 object-contain drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]"
+          />
+          <div>
+            <div className="font-extrabold text-sm text-slate-100 tracking-wider flex items-center gap-1.5">
+              FALCONEYE <span className="text-tactical-accent font-black">FPV</span>
+            </div>
+            <div className="text-[9px] text-slate-400 font-semibold tracking-widest hidden sm:block">
+              AUTONOMOUS TACTICAL PERCEPTION
+            </div>
           </div>
         </div>
 

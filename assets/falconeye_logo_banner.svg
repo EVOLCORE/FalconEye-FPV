@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" fill="none">
+  <defs>
+    <radialGradient id="bannerGlow" cx="15%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="wingGradL" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="wingGradR" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Banner Background -->
+  <rect width="800" height="240" rx="16" fill="#090d16"/>
+  <rect width="800" height="240" rx="16" stroke="#1e293b" stroke-width="2"/>
+  <circle cx="120" cy="120" r="110" fill="url(#bannerGlow)"/>
+
+  <!-- EMBLEM (X: 120, Y: 120) -->
+  <g transform="translate(15, 10) scale(0.9)">
+    <polygon points="120,16 210,68 210,172 120,224 30,172 30,68" 
+             stroke="#1e293b" stroke-width="2" fill="#0b0f19" fill-opacity="0.8"/>
+    <polygon points="120,24 202,72 202,168 120,216 38,168 38,72" 
+             stroke="#06b6d4" stroke-width="1.2" stroke-opacity="0.4" stroke-dasharray="8 6"/>
+
+    <!-- Left Wing -->
+    <path d="M120 40 L64 74 L38 126 L68 122 L92 98 L120 116 Z" fill="url(#wingGradL)" stroke="#475569" stroke-width="1.5"/>
+    <!-- Right Wing -->
+    <path d="M120 40 L176 74 L202 126 L172 122 L148 98 L120 116 Z" fill="url(#wingGradR)" stroke="#64748b" stroke-width="1.5"/>
+
+    <!-- Falcon Head & Beak -->
+    <path d="M120 46 L96 78 L120 92 L144 78 Z" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
+    <polygon points="120,116 108,154 120,178 132,154" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+
+    <!-- Central Targeting Eye -->
+    <circle cx="120" cy="116" r="26" stroke="#06b6d4" stroke-width="2" fill="#080d1a"/>
+    <circle cx="120" cy="116" r="14" fill="#042f2e" stroke="#22d3ee" stroke-width="1.5"/>
+    <ellipse cx="120" cy="116" rx="6" ry="9" fill="url(#cyanGrad)"/>
+    <circle cx="120" cy="116" r="3.5" fill="#f8fafc"/>
+
+    <path d="M82 164 L120 200 L158 164" stroke="#06b6d4" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- TYPOGRAPHY / LOGOTYPE -->
+  <!-- Main Title -->
+  <text x="250" y="112" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="52" font-weight="900" fill="#f8fafc" letter-spacing="4">
+    FALCONEYE <tspan fill="#06b6d4">FPV</tspan>
+  </text>
+
+  <!-- Subtitle -->
+  <text x="254" y="146" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="14" font-weight="700" fill="#94a3b8" letter-spacing="6">
+    AUTONOMOUS AI DRONE &amp; AIRBORNE MESH SYSTEM
+  </text>
+
+  <!-- Badges / Tech Highlights -->
+  <g transform="translate(254, 168)">
+    <rect width="105" height="24" rx="4" fill="#042f2e" stroke="#0d9488" stroke-width="1"/>
+    <text x="52" y="16" font-family="monospace" font-size="10" font-weight="700" fill="#2dd4bf" text-anchor="middle">EDGE AI YOLOV11</text>
+
+    <rect x="115" width="105" height="24" rx="4" fill="#1e1b4b" stroke="#6366f1" stroke-width="1"/>
+    <text x="167" y="16" font-family="monospace" font-size="10" font-weight="700" fill="#a5b4fc" text-anchor="middle">AIR-MESH SWARM</text>
+
+    <rect x="230" width="115" height="24" rx="4" fill="#450a0a" stroke="#b91c1c" stroke-width="1"/>
+    <text x="287" y="16" font-family="monospace" font-size="10" font-weight="700" fill="#fca5a5" text-anchor="middle">THERMAL NIGHT OPS</text>
+  </g>
+</svg>

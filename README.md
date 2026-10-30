@@ -1,5 +1,9 @@
 # FalconEye FPV
 
+<p align="center">
+  <img src="assets/falconeye_logo_banner.svg" alt="FalconEye FPV Banner Logo" width="100%">
+</p>
+
 > **Autonomous AI FPV Drone System, Live Operator Ground Station & Multi-Drone Airborne Mesh Platform**
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)

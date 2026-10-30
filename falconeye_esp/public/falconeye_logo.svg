@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" fill="none">
+  <defs>
+    <!-- Background Radial Glow -->
+    <radialGradient id="cyberGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.35"/>
+      <stop offset="60%" stop-color="#0891b2" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Carbon Stealth Metal Gradients -->
+    <linearGradient id="stealthWingLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="50%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+
+    <linearGradient id="stealthWingRight" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#475569"/>
+      <stop offset="50%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#090d16"/>
+    </linearGradient>
+
+    <!-- Electric Cyan Pulse Gradient -->
+    <linearGradient id="cyanCore" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#67e8f9"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+
+    <!-- Amber Warning Target Glow -->
+    <linearGradient id="amberReticle" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+
+    <!-- Drop Shadow Filter -->
+    <filter id="tacticalGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Ambient Glow -->
+  <circle cx="120" cy="120" r="105" fill="url(#cyberGlow)"/>
+
+  <!-- Tactical Hex Shield Outer Ring -->
+  <polygon points="120,12 214,66 214,174 120,228 26,174 26,66" 
+           stroke="#1e293b" stroke-width="2.5" fill="#0b0f19" fill-opacity="0.8"/>
+  <polygon points="120,20 206,70 206,170 120,220 34,170 34,70" 
+           stroke="#06b6d4" stroke-width="1.2" stroke-opacity="0.4" stroke-dasharray="8 6"/>
+
+  <!-- Left Swept Aerodynamic Wing / Quadcopter Arm -->
+  <path d="M120 40 L64 74 L38 126 L68 122 L92 98 L120 116 Z" 
+        fill="url(#stealthWingLeft)" stroke="#475569" stroke-width="1.5"/>
+  <path d="M38 126 L22 144 L56 142 L68 122 Z" 
+        fill="#0f172a" stroke="#334155" stroke-width="1"/>
+
+  <!-- Right Swept Aerodynamic Wing / Quadcopter Arm -->
+  <path d="M120 40 L176 74 L202 126 L172 122 L148 98 L120 116 Z" 
+        fill="url(#stealthWingRight)" stroke="#64748b" stroke-width="1.5"/>
+  <path d="M202 126 L218 144 L184 142 L172 122 Z" 
+        fill="#1e293b" stroke="#475569" stroke-width="1"/>
+
+  <!-- Falcon Sharp Brow & Cranium -->
+  <path d="M120 46 L96 78 L120 92 L144 78 Z" 
+        fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
+
+  <!-- Fierce Beak / Forward Pod -->
+  <polygon points="120,116 108,154 120,178 132,154" 
+           fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+  <line x1="120" y1="116" x2="120" y2="178" stroke="#06b6d4" stroke-width="1.5"/>
+
+  <!-- THE FALCON EYE: Central Camera Lens & Targeting Reticle -->
+  <g filter="url(#tacticalGlow)">
+    <!-- Outer Reticle Ring -->
+    <circle cx="120" cy="116" r="26" stroke="#06b6d4" stroke-width="2" fill="#080d1a"/>
+    <circle cx="120" cy="116" r="20" stroke="#38bdf8" stroke-width="1" stroke-dasharray="6 4"/>
+    
+    <!-- Optical Aperture Blades -->
+    <circle cx="120" cy="116" r="14" fill="#042f2e" stroke="#22d3ee" stroke-width="1.5"/>
+
+    <!-- Glowing Iris / Falcon Pupil -->
+    <ellipse cx="120" cy="116" rx="6" ry="9" fill="url(#cyanCore)"/>
+    <circle cx="120" cy="116" r="3.5" fill="#f8fafc"/>
+
+    <!-- Reticle Crosshair Ticks -->
+    <line x1="120" y1="84" x2="120" y2="92" stroke="#22d3ee" stroke-width="2"/>
+    <line x1="120" y1="140" x2="120" y2="148" stroke="#22d3ee" stroke-width="2"/>
+    <line x1="88" y1="116" x2="96" y2="116" stroke="#22d3ee" stroke-width="2"/>
+    <line x1="144" y1="116" x2="152" y2="116" stroke="#22d3ee" stroke-width="2"/>
+  </g>
+
+  <!-- Aerodynamic Trailing Wing Chevron Accents -->
+  <path d="M78 156 L120 198 L162 156" 
+        stroke="#06b6d4" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <path d="M92 174 L120 202 L148 174" 
+        stroke="#f59e0b" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.85"/>
+</svg>
