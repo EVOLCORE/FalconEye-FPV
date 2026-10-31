@@ -10,7 +10,7 @@
 [![ROS 2: Jazzy / Humble](https://img.shields.io/badge/ROS%202-Jazzy%20%7C%20Humble-green.svg)](https://docs.ros.org/)
 [![Flight Stack: PX4 & Betaflight](https://img.shields.io/badge/Flight%20Stack-PX4%20%7C%20Betaflight-orange.svg)](https://px4.io/)
 [![Edge AI: YOLO11 + TensorRT](https://img.shields.io/badge/Edge%20AI-YOLO11%20%7C%20TensorRT-purple.svg)](https://github.com/ultralytics/ultralytics)
-[![Tests: 30 Passing](https://img.shields.io/badge/Tests-30%20Passed-brightgreen.svg)](tests/)
+[![Tests: 37 Passing](https://img.shields.io/badge/Tests-37%20Passed-brightgreen.svg)](tests/)
 
 ---
 
@@ -62,7 +62,12 @@ Whether tracking moving vehicles from high altitude, operating in GPS-jammed env
 * **Shared Target Picture:** Sightings from multiple drones are fused into a single target registry based on GPS distance, eliminating duplicate boxes on the map.
 * **One-Click Target Handoff:** Transfer an active visual tracking lock from Drone 1 to Drone 2 with a single click, allowing low-battery drones to safely return home.
 
-### 8. Physical Flight Controller Hardware Bridge
+### 8. Virtual Camera Gimbal & Digital Target Auto-Zoom
+* **Electronic Horizon Leveling (EIS):** Counter-rotates camera viewport against quadcopter roll angles, delivering level horizon stabilization without the payload weight or mechanical failure modes of a brushless gimbal.
+* **Target-Centric Auto-Tracking:** Automatically shifts viewport translation so locked targets stay locked dead center on screen.
+* **Dynamic Auto-Zoom:** Smoothly scales magnification (1.0x to 4.0x) inversely proportional to target bounding box area, keeping distant reconnaissance targets sharp and clear.
+
+### 9. Physical Flight Controller Hardware Bridge
 * **Dual-Protocol Auto-Detection:** Automatically scans USB/COM ports to connect physical flight controllers on the bench:
   * **PX4 Autopilot / ArduPilot** via MAVLink 2.0 @ 921,600 / 57,600 baud.
   * **Betaflight / INAV** via MSP (MultiWii Serial Protocol) @ 115,200 baud.

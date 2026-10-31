@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TargetTrack, FlightStatus, FalconNetStatus, SwarmDroneInfo, VisionMode, NavigationSource, GeofenceZone } from './types';
+import { TargetTrack, FlightStatus, FalconNetStatus, SwarmDroneInfo, VisionMode, NavigationSource, GeofenceZone, GimbalMode } from './types';
 import { HeaderBar } from './components/HeaderBar';
 import { HudOverlay } from './components/HudOverlay';
 import { TacticalMap } from './components/TacticalMap';
@@ -39,6 +39,11 @@ export const App: React.FC = () => {
 
   // Vision Mode (Default: Military White Hot)
   const [visionMode, setVisionMode] = useState<VisionMode>('THERMAL_WHITE_HOT');
+
+  // Virtual Camera Gimbal & Digital Zoom
+  const [gimbalMode, setGimbalMode] = useState<GimbalMode>('HORIZON_LOCKED');
+  const [zoomFactor, setZoomFactor] = useState<number>(1.0);
+  const [autoZoomEnabled, setAutoZoomEnabled] = useState<boolean>(false);
 
   // Flight Status & Anti-Jam Navigation
   const [status, setStatus] = useState<FlightStatus>({
@@ -145,6 +150,17 @@ export const App: React.FC = () => {
           pitchDeg: -3.5 + 1.2 * Math.cos(t * 0.8),
         };
       });
+
+      if (autoZoomEnabled) {
+        setZoomFactor((prevZoom) => {
+          const target = tracks.find((t) => t.trackId === (designatedTrackId || 101));
+          if (!target) return prevZoom;
+          const area =
+            (target.bbox.xMax - target.bbox.xMin) * (target.bbox.yMax - target.bbox.yMin);
+          const desiredZoom = Math.max(1.0, Math.min(4.0, Math.sqrt(0.04 / Math.max(0.0001, area))));
+          return prevZoom + (desiredZoom - prevZoom) * 0.1;
+        });
+      }
     }, 33);
 
     return () => clearInterval(interval);
@@ -242,6 +258,15 @@ export const App: React.FC = () => {
     handleSelectDrone(receiverId);
   };
 
+  const handleSetZoomFactor = (zoom: number) => {
+    setZoomFactor(zoom);
+    setAutoZoomEnabled(false);
+  };
+
+  const handleToggleAutoZoom = () => {
+    setAutoZoomEnabled((prev) => !prev);
+  };
+
   const toggleArm = () => {
     setStatus((prev) => ({ ...prev, armed: !prev.armed }));
   };
@@ -284,7 +309,7 @@ export const App: React.FC = () => {
 
         {/* Center/Right Column: AR Video HUD & Pilot Controls (8 cols) */}
         <div className="col-span-8 flex flex-col gap-3 min-h-0">
-          {/* Main AR Video HUD Display with Thermal Vision */}
+          {/* Main AR Video HUD Display with Thermal Vision & Virtual Gimbal */}
           <div className="flex-1 bg-black rounded-lg border border-tactical-border overflow-hidden relative shadow-2xl">
             <HudOverlay
               tracks={tracks}
@@ -293,7 +318,13 @@ export const App: React.FC = () => {
               isInterceptMode={isInterceptMode}
               visionMode={visionMode}
               targetInKillbox={targetInKillbox}
+              gimbalMode={gimbalMode}
+              zoomFactor={zoomFactor}
+              autoZoomEnabled={autoZoomEnabled}
               onSetVisionMode={setVisionMode}
+              onSetGimbalMode={setGimbalMode}
+              onSetZoomFactor={handleSetZoomFactor}
+              onToggleAutoZoom={handleToggleAutoZoom}
               onDesignateTarget={handleDesignateTarget}
               onBreakLock={handleBreakLock}
             />

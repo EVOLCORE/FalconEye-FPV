@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 850 240" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 240" fill="none">
   <defs>
     <radialGradient id="bannerGlow" cx="15%" cy="50%" r="50%">
       <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.3"/>
@@ -19,8 +19,8 @@
   </defs>
 
   <!-- Banner Background -->
-  <rect width="850" height="240" rx="16" fill="#090d16"/>
-  <rect width="850" height="240" rx="16" stroke="#1e293b" stroke-width="2"/>
+  <rect width="880" height="240" rx="16" fill="#090d16"/>
+  <rect width="880" height="240" rx="16" stroke="#1e293b" stroke-width="2"/>
   <circle cx="120" cy="120" r="110" fill="url(#bannerGlow)"/>
 
   <!-- EMBLEM (X: 120, Y: 120) -->
@@ -55,7 +55,7 @@
   </text>
 
   <!-- Subtitle (Cleanly proportioned so SYSTEM is never truncated) -->
-  <text x="254" y="144" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="12" font-weight="700" fill="#94a3b8" letter-spacing="3">
+  <text x="254" y="144" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="12" font-weight="700" fill="#94a3b8" letter-spacing="2">
     AUTONOMOUS AI DRONE &amp; AIRBORNE MESH SYSTEM
   </text>
 

@@ -7,6 +7,14 @@ export interface BoundingBox {
 
 export type VisionMode = 'DAYLIGHT' | 'THERMAL_WHITE_HOT' | 'THERMAL_BLACK_HOT' | 'THERMAL_IRONBOW';
 export type NavigationSource = 'GPS_RTK' | 'OPTICAL_FLOW_VISION' | 'ESTIMATED_DEAD_RECKONING';
+export type GimbalMode = 'FPV_RAW' | 'HORIZON_LOCKED' | 'TARGET_CENTRIC';
+
+export interface GimbalStatus {
+  mode: GimbalMode;
+  zoomFactor: number;
+  autoZoomEnabled: boolean;
+  horizonCorrectionDeg: number;
+}
 
 export interface TargetTrack {
   trackId: number;
